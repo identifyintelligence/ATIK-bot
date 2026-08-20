@@ -128,8 +128,7 @@
     "god": {
       "enable": true
     }
-  }
-}
+  },
   "eventDisabled": [],
 
   "System": {

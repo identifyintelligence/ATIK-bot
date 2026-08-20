@@ -1,12 +1,10 @@
 const fs = require("fs-extra");
-const request = require("request");
-const path = require("path");
 
 module.exports.config = {
     name: "help",
     version: "2.0.0",
     hasPermssion: 0,
-    credits: "SHAHADAT SAHU",
+    credits: "Zahid",
     description: "Shows all commands with details",
     commandCategory: "system",
     usages: "[command name/page number]",
@@ -19,51 +17,19 @@ module.exports.config = {
 
 module.exports.languages = {
     "en": {
-        "moduleInfo": `╭━━━━━━━━━━━━━━━━╮
-┃ ✨ 𝐂𝐎𝐌𝐌𝐀𝐍𝐃 𝐈𝐍𝐅𝐎 ✨
-┣━━━━━━━━━━━┫
-┃ 🔖 Name: %1
-┃ 📄 Usage: %2
-┃ 📜 Description: %3
-┃ 🔑 Permission: %4
-┃ 👨‍💻 Credit: %5
-┃ 📂 Category: %6
-┃ ⏳ Cooldown: %7s
-┣━━━━━━━━━━━━━━━━┫
-┃ ⚙ Prefix: %8
-┃ 🤖 Bot Name: %9
-┃ 👑 Owner: 𝐒𝐇𝐀𝐇𝐀𝐃𝐀𝐓 𝐒𝐀𝐇𝐔
-╰━━━━━━━━━━━━━━━━╯`,
-        "helpList": "[ There are %1 commands. Use: \"%2help commandName\" to view more. ]",
+        "moduleInfo": `─── COMMAND INFO ───\n\nName: %1\nUsage: %2\nDescription: %3\nPermission: %4\nCredit: %5\nCategory: %6\nCooldown: %7s\n\nPrefix: %8\nBot Name: %9\nOwner: Zahid`,
+        "helpList": "[ There are %1 commands available. Type \"%2help <commandName>\" for details. ]",
         "user": "User",
         "adminGroup": "Admin Group",
         "adminBot": "Admin Bot"
     }
 };
 
-// 🔹 এখানে আপনার ফটো Imgur লিংক করে বসাবেন ✅
-const helpImages = [
-    "https://i.imgur.com/gokzyKd.jpeg",
-    "https://i.imgur.com/g3hlQ0Z.jpeg",
-    "https://i.imgur.com/L7txp4M.jpeg",
-    "https://i.imgur.com/5dG8PS5.jpeg"
-];
-
-
-function downloadImages(callback) {
-    const randomUrl = helpImages[Math.floor(Math.random() * helpImages.length)];
-    const filePath = path.join(__dirname, "cache", "help_random.jpg");
-
-    request(randomUrl)
-        .pipe(fs.createWriteStream(filePath))
-        .on("close", () => callback([filePath]));
-}
-
 module.exports.handleEvent = function ({ api, event, getText }) {
     const { commands } = global.client;
     const { threadID, messageID, body } = event;
 
-    if (!body || typeof body === "undefined" || body.indexOf("help") != 0) return;  
+    if (!body || typeof body === "undefined" || body.indexOf("help") !== 0) return;  
     const splitBody = body.slice(body.indexOf("help")).trim().split(/\s+/);  
     if (splitBody.length < 2 || !commands.has(splitBody[1].toLowerCase())) return;  
 
@@ -80,15 +46,10 @@ module.exports.handleEvent = function ({ api, event, getText }) {
         command.config.commandCategory || "Unknown",  
         command.config.cooldowns || 0,  
         prefix,  
-        global.config.BOTNAME || "𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭"  
+        global.config.BOTNAME || "Bot"  
     );  
 
-    downloadImages(files => {  
-        const attachments = files.map(f => fs.createReadStream(f));  
-        api.sendMessage({ body: detail, attachment: attachments }, threadID, () => {  
-            files.forEach(f => fs.unlinkSync(f));  
-        }, messageID);  
-    });
+    api.sendMessage(detail, threadID, messageID);
 };
 
 module.exports.run = function ({ api, event, args, getText }) {
@@ -101,7 +62,25 @@ module.exports.run = function ({ api, event, args, getText }) {
     if (args[0] && commands.has(args[0].toLowerCase())) {  
         const command = commands.get(args[0].toLowerCase());  
 
-        const detailText = getText("moduleInfo",  
+        const detailText = getText("moduleInfo",
+            command.config.name,  
+            command.config.usages || "Not Provided",  
+            command.config.description || "Not Provided",  
+            command.config.hasPermssion,  
+            command.config.credits || "Unknown",  
+            command.config.commandCategory || "Unknown",  
+            command.config.cooldowns || 0,  
+            prefix,  
+            global.config.BOTNAME || "Bot"
+        );
+
+        return api.sendMessage(detailText, threadID, messageID);
+    } else {
+        const totalCommands = commands.size;
+        const helpMsg = getText("helpList", totalCommands, prefix);
+        return api.sendMessage(helpMsg, threadID, messageID);
+    }
+};
             command.config.name,  
             command.config.usages || "Not Provided",  
             command.config.description || "Not Provided",  

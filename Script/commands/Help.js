@@ -17,7 +17,7 @@ module.exports.config = {
 
 module.exports.languages = {
     "en": {
-        "moduleInfo": `─── COMMAND INFO ───\n\nName: %1\nUsage: %2\nDescription: %3\nPermission: %4\nCredit: %5\nCategory: %6\nCooldown: %7s\n\nPrefix: %8\nBot Name: %9\nOwner: Zahid`,
+        "moduleInfo": `─── COMMAND INFO ───\n\nName: %1\nUsage: %2\nDescription: %3\nPermission: %4\nCredit: %5\nCategory: %6\nCooldown: %7s\n\nPrefix: %8\nBot Name: %9\nOwner: ATIK`,
         "helpList": "[ There are %1 commands available. Type \"%2help <commandName>\" for details. ]",
         "user": "User",
         "adminGroup": "Admin Group",
@@ -34,6 +34,76 @@ module.exports.handleEvent = function ({ api, event, getText }) {
     if (splitBody.length < 2 || !commands.has(splitBody[1].toLowerCase())) return;  
 
     const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};  
+    const command = commands.get(splitBody[1].toLowerCase());  
+    const prefix = threadSetting.PREFIX || global.config.PREFIX;  
+
+    const detail = getText("moduleInfo",  
+        command.config.name,  
+        command.config.usages || "Not Provided",  
+        command.config.description || "Not Provided",  
+        command.config.hasPermssion,  
+        command.config.credits || "Unknown",  
+        command.config.commandCategory || "Unknown",  
+        command.config.cooldowns || 0,  
+        prefix,  
+        global.config.BOTNAME || "ATIK BOT"  
+    );  
+
+    api.sendMessage(detail, threadID, messageID);
+};
+
+module.exports.run = function ({ api, event, args, getText }) {
+    const { commands } = global.client;
+    const { threadID, messageID } = event;
+
+    const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};  
+    const prefix = threadSetting.PREFIX || global.config.PREFIX;  
+
+    if (args[0] && commands.has(args[0].toLowerCase())) {  
+        const command = commands.get(args[0].toLowerCase());  
+
+        const detailText = getText("moduleInfo",
+            command.config.name,  
+            command.config.usages || "Not Provided",  
+            command.config.description || "Not Provided",  
+            command.config.hasPermssion,  
+            command.config.credits || "Unknown",  
+            command.config.commandCategory || "Unknown",  
+            command.config.cooldowns || 0,  
+            prefix,  
+            global.config.BOTNAME || "ATIK BOT"
+        );
+
+        return api.sendMessage(detailText, threadID, messageID);
+    } 
+
+    const arrayInfo = Array.from(commands.keys())
+        .filter(cmdName => cmdName && cmdName.trim() !== "")
+        .sort();  
+
+    const page = Math.max(parseInt(args[0]) || 1, 1);  
+    const numberOfOnePage = 20;  
+    const totalPages = Math.ceil(arrayInfo.length / numberOfOnePage);  
+    const start = numberOfOnePage * (page - 1);  
+    const helpView = arrayInfo.slice(start, start + numberOfOnePage);  
+
+    let msg = helpView.map(cmdName => `┃ ✪ ${cmdName}`).join("\n");
+
+    const text = `╭━━━━━━━━━━━━━━━━╮
+┃ 📜 COMMAND LIST 📜
+┣━━━━━━━━━━━━━━━┫
+┃ 📄 Page: ${page}/${totalPages}
+┃ 🧮 Total: ${arrayInfo.length}
+┣━━━━━━━━━━━━━━━━┫
+${msg}
+┣━━━━━━━━━━━━━━━━┫
+┃ ⚙ Prefix: ${prefix}
+┃ 🤖 Bot Name: ${global.config.BOTNAME || "ATIK BOT"}
+┃ 👑 Owner: ATIK
+╰━━━━━━━━━━━━━━━━╯`;
+
+    return api.sendMessage(text, threadID, messageID);
+};
     const command = commands.get(splitBody[1].toLowerCase());  
     const prefix = threadSetting.PREFIX || global.config.PREFIX;  
 
